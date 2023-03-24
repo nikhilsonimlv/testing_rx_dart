@@ -1,0 +1,16 @@
+[
+        {
+            "name":"Billi",
+            "type":"cat"
+        },
+
+        {
+            "name":"kutta",
+            "type":"dog"
+        },
+
+        {
+            "name":"Khargosh",
+            "type":"rabbit"
+        }
+]

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:rxdart/rxdart.dart';
+import 'package:testing_rx_dart/view/home_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,29 +17,21 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       debugShowCheckedModeBanner: false,
-      home: const HomePage(),
+      home: const MainPage(),
     );
   }
 }
 
-class HomePage extends HookWidget {
-  const HomePage({Key? key}) : super(key: key);
+class MainPage extends StatelessWidget {
+  const MainPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final subject = useMemoized(() => BehaviorSubject<String>(), [key]);
-    //dispose old subject
-    useEffect(() => subject.close, [subject]);
     return Scaffold(
       appBar: AppBar(
-        title: StreamBuilder<String>(builder: (context, snapshot) => Text(snapshot.data??""), stream: subject.stream.distinct().debounceTime(const Duration(seconds: 1,)),),
+        title: const Text("Home Page"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: TextField(
-          onChanged: subject.sink.add,
-        ),
-      ),
+      body: const HomePage(),
     );
   }
 }
