@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:testing_rx_dart/view/home_page.dart';
+import 'package:rxdart/rxdart.dart';
+import 'dart:developer' as devtools show log;
+
+extension Log on Object{
+  void log()=>devtools.log(toString());
+}
 
 void main() {
   runApp(const MyApp());
@@ -17,21 +22,33 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       debugShowCheckedModeBanner: false,
-      home: const MainPage(),
+      home: const HomePage(),
     );
   }
 }
 
-class MainPage extends StatelessWidget {
-  const MainPage({Key? key}) : super(key: key);
+void testIt() async{
+
+  final stream1 =Stream.periodic(const Duration(seconds: 1),(computationCount) => "Stream 1, count = $computationCount",).take(3);
+  final stream2 =Stream.periodic(const Duration(seconds: 1),(computationCount) => "Stream 2, count = $computationCount",);
+
+  final result = stream1.concatWith([stream2]);
+
+  await for(final value in result){
+    value.log();
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    testIt();
     return Scaffold(
       appBar: AppBar(
         title: const Text("Home Page"),
       ),
-      body: const HomePage(),
     );
   }
 }
