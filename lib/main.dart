@@ -30,9 +30,9 @@ class MyApp extends StatelessWidget {
 void testIt() async{
 
   final stream1 =Stream.periodic(const Duration(seconds: 1),(computationCount) => "Stream 1, count = $computationCount",);
-  final stream2 =Stream.periodic(const Duration(seconds: 3),(computationCount) => "Stream 2, count = $computationCount",);
+  final stream2 =Stream.periodic(const Duration(seconds: 5),(computationCount) => "Stream 2, count = $computationCount",);
 
-  final result = stream1.mergeWith([stream2]);
+  final result =Rx.zip2(stream1, stream2, (a, b) => 'Zip result a = $a ,b = $b');
 
   await for(final value in result){
     value.log();
