@@ -29,10 +29,10 @@ class MyApp extends StatelessWidget {
 
 void testIt() async{
 
-  final stream1 =Stream.periodic(const Duration(seconds: 1),(computationCount) => "Stream 1, count = $computationCount",).take(3);
-  final stream2 =Stream.periodic(const Duration(seconds: 1),(computationCount) => "Stream 2, count = $computationCount",);
+  final stream1 =Stream.periodic(const Duration(seconds: 1),(computationCount) => "Stream 1, count = $computationCount",);
+  final stream2 =Stream.periodic(const Duration(seconds: 3),(computationCount) => "Stream 2, count = $computationCount",);
 
-  final result = stream1.concatWith([stream2]);
+  final result = stream1.mergeWith([stream2]);
 
   await for(final value in result){
     value.log();
