@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
 
 void main() {
@@ -22,139 +25,49 @@ class MyApp extends StatelessWidget {
   }
 }
 
-//Bloc class
-@immutable
-class Bloc {
-  final Sink<String?> setFirstName; //write only
-  final Sink<String?> setLastName; //write only
-  final Stream<String> fullName; //read only
-
-  const Bloc._({
-    required this.setFirstName,
-    required this.setLastName,
-    required this.fullName,
-  });
-
-  void dispose() {
-    setFirstName.close();
-    setLastName.close();
-  }
-
-  factory Bloc() {
-    final firstName = BehaviorSubject<String?>();
-    final lastName = BehaviorSubject<String?>();
-
-    final Stream<String> fullName = Rx.combineLatest2(firstName.startWith(null), lastName.startWith(null), (
-      String? firstName,
-      String? lastName,
-    ) {
-      if (firstName != null && lastName != null && firstName.isNotEmpty && lastName.isNotEmpty) {
-        return "$firstName $lastName";
-      } else {
-        return " first name and last name must be provided";
-      }
-    });
-
-    return Bloc._(
-      setFirstName: firstName.sink,
-      setLastName: lastName.sink,
-      fullName: fullName,
-    );
-  }
+Stream<String> getContent({required String filePath}) {
+  final stream = rootBundle.loadString(filePath);
+  return Stream.fromFuture(stream).transform(const LineSplitter());
 }
 
-typedef AsyncSnapShotBuilderCallBack<T> = Widget Function(BuildContext context, T? value);
-
-class AsyncSnapShotBuilder<T> extends StatelessWidget {
-  final Stream<T> stream;
-  final AsyncSnapShotBuilderCallBack<T>? onNone;
-  final AsyncSnapShotBuilderCallBack<T>? onWaiting;
-  final AsyncSnapShotBuilderCallBack<T>? onActive;
-  final AsyncSnapShotBuilderCallBack<T>? onDone;
-
-  const AsyncSnapShotBuilder({
-    Key? key,
-    required this.stream,
-    this.onNone,
-    this.onWaiting,
-    this.onActive,
-    this.onDone,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: stream,
-      builder: (context, snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.none:
-            final callback = onNone ?? (_, __) => const SizedBox();
-            return callback(context, snapshot.data);
-          case ConnectionState.waiting:
-            final callback = onWaiting ?? (_, __) => const CircularProgressIndicator();
-            return callback(context, snapshot.data);
-          case ConnectionState.active:
-            final callback = onActive ?? (_, __) => const SizedBox();
-            return callback(context, snapshot.data);
-          case ConnectionState.done:
-            final callback = onDone ?? (_, __) => const SizedBox();
-            return callback(context, snapshot.data);
-        }
-      },
-    );
-  }
+Stream<String> getData() {
+  final file1 = getContent(filePath: "assets/text/cats.txt");
+  final file2 = getContent(filePath: "assets/text/dogs.txt");
+  return file1.concatWith([file2]).delay(Duration(seconds: 2));
 }
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  late final Bloc _bloc;
-
-  @override
-  void initState() {
-    super.initState();
-    _bloc = Bloc();
-  }
-
-  @override
-  void dispose() {
-    _bloc.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Combine Latest with rx Dart"),
+        title: const Text("Home Page"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            TextField(
-              decoration: const InputDecoration(hintText: "First Name"),
-              onChanged: (value) {
-                _bloc.setFirstName.add(value);
-              },
-            ),
-            TextField(
-              decoration: const InputDecoration(hintText: "Last Name"),
-              onChanged: (value) {
-                _bloc.setLastName.add(value);
-              },
-            ),
-            AsyncSnapShotBuilder<String>(
-              stream: _bloc.fullName,
-              onActive: ((context, String? value) => Text(value ?? "")),
-            ),
-          ],
-        ),
+      body: FutureBuilder(
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+              return const Center(child: CircularProgressIndicator());
+            case ConnectionState.waiting:
+              return const Center(child: CircularProgressIndicator());
+            case ConnectionState.active:
+              return const Center(child: CircularProgressIndicator());
+            case ConnectionState.done:
+              final name = snapshot.requireData;
+
+              return ListView.separated(
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(name[index].toString()),
+                    );
+                  },
+                  separatorBuilder: (_, __) => const Divider(color: Colors.green),
+                  itemCount: name.length);
+          }
+        },
+        future: getData().toList(),
       ),
     );
   }
